@@ -141,6 +141,24 @@ impl<T> Result<T> {
     }
 }
 
+impl std::process::Termination for Result<()> {
+    fn report(self) -> std::process::ExitCode {
+        let code = match self {
+            Ok(()) => 0,
+            Err(errors) => {
+                let stderr = &mut std::io::stderr();
+                for error in errors.0.iter() {
+                    format_error::SimpleReportHandler::new()
+                        .render_error(stderr, error)
+                        .unwrap();
+                }
+                errors.0.len() as u8
+            }
+        };
+        std::process::ExitCode::from(code)
+    }
+}
+
 // impl<E: std::error::Error + 'static> From<E> for Errors {
 //     #[track_caller]
 //     fn from(value: E) -> Self {

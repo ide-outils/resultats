@@ -7,15 +7,14 @@ fn parse(s: &str) -> Result<String> {
     Ok(value.to_string())
 }
 
-fn ideal() -> Result<()> {
-    let iter = vec!["1", "2", "trois", "4", "dsdf", "dsfds", "sd"].into_iter();
-    let parsed: Vec<String> = iter.map(parse).collect::<Result<Vec<String>>>()?;
-    println!("{}", parsed.join(" ; "));
+fn parse_nums() -> Result<()> {
+    let iter = vec!["1", "2", "trois", "4", "..."].into_iter();
+    let iter2 = vec!["1", "2", "4", "cinq"].into_iter();
+    let parsed: Result<Vec<_>> = iter.map(parse).chain(iter2.map(parse)).collect();
+    println!("{}", parsed?.join(" ; "));
     Ok(())
 }
 
-fn main() {
-    if let Err(e) = ideal() {
-        eprintln!("{:?}", e);
-    }
+fn main() -> Result<()> {
+    parse_nums()
 }

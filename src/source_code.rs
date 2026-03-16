@@ -11,13 +11,13 @@ use crate::ast::{Genre, Node};
 type Files = HashMap<String, File>;
 static CACHE: LazyLock<Arc<RwLock<Files>>> = LazyLock::new(|| Default::default());
 
-pub fn code_from_location(location: &Location, parent_genre: Option<&Genre>) -> Option<LineSpan> {
+pub fn code_from_location(location: &Location, parent_genre: Option<&Genre>) -> LineSpan {
     let path = location.file();
     let line = location.line() as usize;
     let column = location.column() as usize;
     let read = CACHE.read().unwrap();
     let file = read.get(path);
-    let File { lines, .. } = match file {
+    let file = match file {
         Some(file) => file,
         None => {
             drop(read);
@@ -28,7 +28,7 @@ pub fn code_from_location(location: &Location, parent_genre: Option<&Genre>) -> 
         }
     };
     // TODO: parent_genre
-    lines[line].get_span(&column).map(|span| span.clone())
+    file.get_span(line, column)
 }
 
 #[derive(Clone)]
@@ -137,5 +137,18 @@ impl File {
     fn from_location(location: &Location) -> Self {
         let code = fs::read(location.file()).unwrap();
         Self::new(Vec::leak(code))
+    }
+    fn get_span(&self, line: usize, column: usize) -> LineSpan {
+        let mut line = line;
+        let lines = &self.lines;
+        let mut span = lines[line].get_span(&column);
+        while let None = span {
+            if line == 0 {
+                panic!("No span found.");
+            }
+            line -= 1;
+            span = lines[line].get_span(&column);
+        }
+        span.unwrap().clone()
     }
 }

@@ -30,8 +30,8 @@ impl Loc {
     }
     pub fn related_code(&self) -> source_code::LineSpan {
         match self {
-            Loc::Location(location) => source_code::code_from_location(location, None).unwrap(),
-            Loc::Parent { location, genre } => source_code::code_from_location(location, Some(genre)).unwrap(),
+            Loc::Location(location) => source_code::code_from_location(location, None),
+            Loc::Parent { location, genre } => source_code::code_from_location(location, Some(genre)),
         }
     }
 }
@@ -41,7 +41,6 @@ impl std::fmt::Debug for Loc {
             Self::Location(location) => location,
             Self::Parent { location, .. } => location,
         };
-        // writeln!(f, "TODO")
         writeln!(f, "{}", location)
     }
 }
@@ -113,13 +112,6 @@ impl std::fmt::Debug for Error {
     }
 }
 
-// #[cfg(feature = "fancy")]
-// impl std::fmt::Debug for Error {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         todo!("miette implémentation.")
-//     }
-// }
-
 #[derive(Default)]
 pub struct Errors(pub Vec<Error>);
 
@@ -131,17 +123,6 @@ impl std::fmt::Debug for Errors {
         SOk(())
     }
 }
-
-// #[cfg(feature = "fancy")]
-// impl std::fmt::Debug for Errors {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         todo!("miette implémentation. Probably useless here. simply keep this loop.")
-//         // for error in &self.0 {
-//         //     write!(f, "{error:?}")?;
-//         // }
-//         // SOk(())
-//     }
-// }
 
 pub enum Result<T> {
     Ok(T),
@@ -160,7 +141,23 @@ impl<T> Result<T> {
     }
 }
 
-impl<E: std::error::Error + 'static> From<E> for Errors {
+// impl<E: std::error::Error + 'static> From<E> for Errors {
+//     #[track_caller]
+//     fn from(value: E) -> Self {
+//         Self(vec![Error {
+//             code: std::any::type_name::<E>(),
+//             display: value.to_string(),
+//             loc: Loc::Location(Location::caller()),
+//             url: None,
+//             severity: Severity::default(),
+//             labels: Default::default(),
+//             groupe: None,
+//             source: None,
+//         }])
+//     }
+// }
+
+impl<E: ToString + 'static> From<E> for Errors {
     #[track_caller]
     fn from(value: E) -> Self {
         Self(vec![Error {
